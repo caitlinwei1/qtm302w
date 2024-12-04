@@ -1,0 +1,23 @@
+---
+title: "Lab1"
+author: "Caitlin Wei"
+date: "2024/9/5"
+output: html_document
+---
+
+
+## Education
+
+* **2026** Bachelor of Arts in Economics, Bachelor of Science in Quantitative Sciences, Emory University
+
+
+## Employment
+
+* **2023** Intern, Soochow Securities Co
+  * Analyzed financial reports from a land management company to understand fixed income dynamics
+
+- **2022** Intern, Bank of Ningbo  
+  * Assisted risk management teams to censor documents, managing risks and coordinating with employees from other departments
+
+
+

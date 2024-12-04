@@ -1,0 +1,96 @@
+---
+title: "lab3wei"
+output: html_document
+date: "2024-10-20"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(nycflights13)
+library(tidyverse)
+```
+
+### 5.5.2
+1. Currently dep_time and sched_dep_time are convenient to look at, but hard to compute with because they’re not really continuous numbers. Convert them to a more convenient representation of number of minutes since midnight. Then, compare the difference between these new variables to each flight’s dep_delay value. Does anything surprise you? Can you explain what accounts for the “anomaly”? How many cases do you observe?
+```{r}
+flights <-mutate(flights,
+       dep_time1 = (dep_time %/% 100) * 60 + (dep_time %% 100),
+       sched_dep_time1 = (sched_dep_time %/% 100) * 60 + (sched_dep_time %% 100))
+  
+
+```
+
+```{r}
+# compare new variables with dep_delay
+select(flights, dep_time1, sched_dep_time1, dep_delay)
+```
+```{r}
+flights <- mutate(flights, dep_diff = dep_time1-sched_dep_time1)
+```
+
+```{r}
+comparison <- flights %>%
+  mutate(anomaly = dep_diff != dep_delay) 
+comparison %>% filter(anomaly == TRUE) %>% count()
+
+```
+```{r}
+# Display the first five observations with relevant columns
+flights %>%
+  select(carrier, flight, dep_time1, sched_dep_time1, dep_diff, dep_delay) %>%
+  head(5)
+```
+
+The difference in dep_time1 and sched_dep_time is given by dep_delay. Overall, there are around 1207 cases where the difference in new variables is not equal to dep_delay. 
+
+### 5.6.7
+2. Is the proportion of canceled flights per day related to the average delay for that day? Output a csv file that will allow you to make a scatter plot of the proportion of cancelled flights vs. the average delay for that
+day
+```{r}
+flights %>% 
+  mutate(
+    cancelled = is.na(dep_delay) | is.na(arr_delay)) %>%
+    group_by(month, day) %>%
+  summarise(
+    total_flights = n(),  # Total number of flights per day
+    cancelled_flights = sum(cancelled),  # Total number of cancelled flights per day
+    proportion_cancelled = mean(cancelled),  # Proportion of cancelled flights per day
+    avg_delay = mean(dep_delay, na.rm = TRUE)  # Average departure delay (ignore NA values)
+  ) %>%
+  ggplot(mapping = aes(x = avg_delay, y = proportion_cancelled)) +
+  geom_point() +
+  geom_smooth(method = 'lm', se = FALSE)
+```
+ According to the figure, there seems to have a weak relationship between canceallations and delay. I use r to draw graph instead of tableau since i do not have access. 
+
+5. Which carrier, on average, has the shortest departure delays? In your response, provide the name of the
+airline, not simply two-letter carrier code. Contextualize this delay with respect to delays of other airlines.
+
+```{r}
+# Calculate the average departure delay per carrier
+average_delay <- flights %>%
+  filter(!is.na(dep_delay)) %>%  # Filter out missing departure delays
+  group_by(carrier) %>%  # Group by carrier
+  summarise(avg_dep_delay = mean(dep_delay)) %>%  # Calculate average delay
+  arrange(avg_dep_delay)  # Sort by the shortest delay
+
+# Join with airline names for better clarity
+average_delay %>%
+  left_join(airlines, by = "carrier")  # airlines dataset contains full carrier names
+
+```
+According to the tibble, we can see that US Airways has the shortest average departure delay compared to other airlines. For example, Frontier Airlines have the longest average departure delay.
+
+### What is a suspicious multiple?
+A suspicious multiple refers to values in a dataset that frequently appear as exact multiples (e.g., 5, 10, 15). These values suggest data rounding or estimation rather than precise measurement, which can distort analysis.
+
+For example, in a dataset of flight delays, if many delays are reported as exactly 5, 10, or 15 minutes, it's likely that these are estimates rather than exact times. Such clustering can misrepresent the true distribution of delays.
+
+Another example could be a survey dataset records many respondents reporting their income as exactly 50,000, 100,000, or 150,000, these values could be suspicious. People often estimate or round their income to the nearest multiple of 10,000 or 50,000 when answering surveys.
+
+Exceptions occur when multiples reflect real-world patterns, like bus schedules or work shifts aligning with specific time intervals. However, in most cases requiring precise measurements, such multiples signal potential data quality issues.
+
+We should watch for suspicious multiples because they may introduce bias, reduce data accuracy, and distort statistical analyses. Identifying and addressing them ensures more reliable results.
